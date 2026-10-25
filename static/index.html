@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LeadRoom</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #f6f3ee;
+  --surface: #ffffff;
+  --surface-2: #faf7f1;
+  --border: #e6e0d4;
+  --border-strong: #cfc6b4;
+  --fg: #1a1915;
+  --fg-dim: #67635b;
+  --fg-mute: #938e82;
+  --accent: #c7471a;
+  --accent-soft: #f1dccf;
+  --good: #2f7a3e;
+  --warn: #a66a10;
+  --crit: #a3301b;
+  --ring: rgba(199,71,26,.28);
+  --shadow: 0 1px 0 rgba(26,25,21,.04), 0 8px 24px -16px rgba(26,25,21,.18);
+  --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141311; --surface: #1c1b18; --surface-2: #22211d;
+    --border: #2e2c27; --border-strong: #3d3a33;
+    --fg: #efece4; --fg-dim: #a9a498; --fg-mute: #7a7568;
+    --accent: #e76a3c; --accent-soft: #3a2117;
+    --good: #6cc07e; --warn: #e2a94a; --crit: #e86b55;
+    --ring: rgba(231,106,60,.35);
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 28px -16px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-ui); font-size: 14px; line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+a { color: inherit; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+img { max-width: 100%; }
+
+.shell { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+header.top {
+  grid-column: 1 / -1; position: sticky; top: 0; z-index: 20;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 10px 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: baseline; gap: 8px; font-family: var(--font-brand); font-size: 22px; letter-spacing: -0.01em; }
+.brand em { color: var(--accent); font-style: italic; font-weight: 500; }
+.brand .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); align-self: center; }
+
+.stats { display: flex; gap: 22px; margin-left: 8px; flex: 1 1 auto; min-width: 0; }
+.stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat .k { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-mute); }
+.stat .v { font-family: var(--font-mono); font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.stat .v .u { color: var(--fg-dim); font-size: 12px; margin-left: 2px; }
+
+.topright { display: flex; align-items: center; gap: 10px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface-2); font-size: 12px; color: var(--fg-dim);
+}
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--good);
+  box-shadow: 0 0 0 0 rgba(47,122,62,.5); animation: pulse 2.2s infinite; }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(47,122,62,.5);} 70%{box-shadow:0 0 0 8px rgba(47,122,62,0);} 100%{box-shadow:0 0 0 0 rgba(47,122,62,0);} }
+
+aside.rail {
+  grid-row: 2; background: var(--surface); border-right: 1px solid var(--border);
+  padding: 18px 16px 24px; display: flex; flex-direction: column; gap: 22px;
+}
+.rail h3 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-mute); margin: 0 0 10px; font-weight: 600; }
+.niche { display: flex; flex-direction: column; gap: 2px; }
+.niche button {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 10px; border-radius: 6px; text-align: left; color: var(--fg-dim);
+  font-size: 13px; width: 100%;
+}
+.niche button:hover { background: var(--surface-2); color: var(--fg); }
+.niche button.on { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.niche .count { font-family: var(--font-mono); font-size: 11px; color: var(--fg-mute); }
+.niche button.on .count { color: var(--accent); }
+
+.filter { display: flex; flex-direction: column; gap: 10px; }
+.filter label { font-size: 12px; color: var(--fg-dim); display: flex; justify-content: space-between; }
+.filter input[type=range] { accent-color: var(--accent); width: 100%; }
+
+main.feed { grid-row: 2; padding: 20px 20px 60px; min-width: 0; overflow-x: hidden; }
+.feed-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+.feed-head h1 { font-family: var(--font-brand); font-weight: 400; font-size: 28px; letter-spacing: -0.015em; margin: 0; }
+.feed-head h1 em { color: var(--accent); font-style: italic; }
+.feed-head .sub { color: var(--fg-dim); font-size: 13px; margin-top: 2px; }
+
+.leads { display: flex; flex-direction: column; gap: 10px; }
+.empty { padding: 60px 20px; text-align: center; color: var(--fg-dim); border: 1px dashed var(--border); border-radius: 10px; }
+.empty h2 { font-family: var(--font-brand); font-weight: 400; margin: 0 0 8px; font-size: 22px; color: var(--fg); }
+
+.lead {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; display: grid; grid-template-columns: 48px 1fr auto; gap: 14px;
+  transition: border-color .15s, box-shadow .15s; cursor: pointer;
+}
+.lead:hover { border-color: var(--border-strong); box-shadow: var(--shadow); }
+.lead.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+.gauge { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.gauge .ring { position: relative; width: 44px; height: 44px; }
+.gauge svg { transform: rotate(-90deg); }
+.gauge .num { position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+.gauge .lbl { font-size: 10px; color: var(--fg-mute); letter-spacing: 0.06em; text-transform: uppercase; }
+
+.body { min-width: 0; }
+.meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; color: var(--fg-dim); font-size: 12px; }
+.sub-badge { color: var(--accent); font-weight: 500; font-family: var(--font-mono); font-size: 12px; }
+.meta .sep { color: var(--border-strong); }
+.author-k { font-family: var(--font-mono); font-size: 11px; color: var(--fg-mute); }
+.title { color: var(--fg); font-weight: 500; font-size: 15px; margin: 0 0 4px; line-height: 1.35; }
+.snippet { color: var(--fg-dim); font-size: 13px; margin: 0 0 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lead-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--surface-2); color: var(--fg-dim); border: 1px solid var(--border); }
+.tag.intent-hot { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.tag.status-drafted { background: #dde9df; color: var(--good); border-color: transparent; }
+.tag.status-posted { background: var(--accent); color: #fff; border-color: transparent; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tag.status-drafted { background: #1e3524; color: var(--good); }
+}
+
+.actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.btn {
+  padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--border); color: var(--fg); background: var(--surface);
+  transition: all .12s; white-space: nowrap;
+}
+.btn:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(.95); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--fg-dim); padding: 5px 8px; }
+.btn.ghost:hover { color: var(--fg); }
+.time { font-size: 11px; color: var(--fg-mute); font-family: var(--font-mono); }
+
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(560px, 100%); background: var(--surface); border-left: 1px solid var(--border);
+  box-shadow: var(--shadow); z-index: 30;
+  transform: translateX(100%); transition: transform .2s ease-out;
+  display: flex; flex-direction: column;
+}
+.drawer.open { transform: translateX(0); }
+.drawer-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.drawer-head .sub-badge { font-size: 13px; }
+.drawer-body { padding: 18px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+.post-full h2 { font-family: var(--font-brand); font-weight: 400; font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px; line-height: 1.25; }
+.post-full .post-meta { color: var(--fg-dim); font-size: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.post-full .post-body { color: var(--fg); font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+.post-stats { display: flex; gap: 16px; color: var(--fg-dim); font-size: 12px; font-family: var(--font-mono); border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); padding: 10px 0; align-items: center; }
+.post-stats a { color: var(--accent); margin-left: auto; text-decoration: none; }
+
+.draft-box { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.draft-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.draft-head h3 { margin: 0; font-size: 13px; color: var(--fg-dim); letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+.draft-head .model { font-family: var(--font-mono); font-size: 11px; color: var(--fg-mute); }
+.draft {
+  width: 100%; min-height: 180px; resize: vertical; padding: 10px; border-radius: 6px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--fg);
+  font-family: var(--font-ui); font-size: 14px; line-height: 1.6;
+}
+.draft:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+.critic { display: flex; gap: 10px; margin-top: 10px; font-size: 12px; color: var(--fg-dim); flex-wrap: wrap; }
+.critic span { display: inline-flex; align-items: center; gap: 5px; }
+.critic .ok { color: var(--good); }
+.critic .flag { color: var(--warn); }
+
+.draft-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 10px; flex-wrap: wrap; }
+.draft-actions .left, .draft-actions .right { display: flex; gap: 6px; }
+
+.disclosure { font-size: 11px; color: var(--fg-mute); padding: 8px 12px; background: var(--surface-2); border: 1px dashed var(--border); border-radius: 6px; margin-top: 12px; }
+.disclosure b { color: var(--fg-dim); }
+
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 8px;
+  font-size: 13px; z-index: 50; box-shadow: var(--shadow);
+  opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+@media (max-width: 820px) {
+  .shell { grid-template-columns: 1fr; }
+  aside.rail { display: none; }
+  .stats { gap: 14px; width: 100%; order: 3; }
+  .stat .v { font-size: 15px; }
+  .lead { grid-template-columns: 40px 1fr; }
+  .lead .actions { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; }
+  .drawer { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brand"><span class="dot"></span><em>Lead</em>Room</div>
+    <div class="stats" id="stats"></div>
+    <div class="topright">
+      <button class="btn" id="scanBtn">↻ Scan now</button>
+      <div class="pill" id="scanStatus"><span class="pulse"></span><span id="scanStatusText">idle</span></div>
+    </div>
+  </header>
+
+  <aside class="rail">
+    <div>
+      <h3>Niches</h3>
+      <div class="niche" id="niches"></div>
+    </div>
+    <div class="filter">
+      <h3>Filter</h3>
+      <label>Min intent score <span id="score-v">50</span></label>
+      <input type="range" min="0" max="100" value="50" id="score-r">
+      <label>Status</label>
+      <select id="statusFilter" style="padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--fg)">
+        <option value="">All</option>
+        <option value="scored">New (scored)</option>
+        <option value="drafted">Drafted</option>
+        <option value="approved">Approved</option>
+        <option value="posted">Posted</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+  </aside>
+
+  <main class="feed">
+    <div class="feed-head">
+      <div>
+        <h1 id="feedTitle"><em>All niches</em></h1>
+        <div class="sub" id="feedSub">Loading…</div>
+      </div>
+    </div>
+    <div class="leads" id="leads"></div>
+  </main>
+
+  <div class="drawer" id="drawer">
+    <div class="drawer-head">
+      <div class="sub-badge" id="d-sub"></div>
+      <button class="btn ghost" onclick="closeDrawer()">Close ✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const api = {
+  async get(path) { const r = await fetch(path); if (!r.ok) throw new Error(await r.text()); return r.json(); },
+  async post(path, body) { const r = await fetch(path, {method: 'POST', headers:{'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : null}); if (!r.ok) throw new Error(await r.text()); return r.json(); },
+  async put(path, body) { const r = await fetch(path, {method: 'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}); if (!r.ok) throw new Error(await r.text()); return r.json(); }
+};
+
+let state = { niches: [], leads: [], selectedNiche: null, selectedLead: null, minScore: 50, statusFilter: '' };
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function timeAgo(iso) {
+  const d = new Date(iso);
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+function gaugeSVG(score) {
+  const color = score >= 80 ? 'var(--accent)' : score >= 60 ? 'var(--warn)' : 'var(--fg-mute)';
+  const c = 2 * Math.PI * 18;
+  const d = c * score / 100;
+  return `<svg width="44" height="44"><circle cx="22" cy="22" r="18" stroke="var(--border)" stroke-width="3" fill="none"/><circle cx="22" cy="22" r="18" stroke="${color}" stroke-width="3" fill="none" stroke-dasharray="${d} ${c-d}" stroke-linecap="round"/></svg>`;
+}
+
+function statusTag(s) {
+  if (s === 'scored' || s === 'new') return `<span class="tag intent-hot">● New lead</span>`;
+  if (s === 'drafted') return `<span class="tag status-drafted">◆ Drafted</span>`;
+  if (s === 'posted') return `<span class="tag status-posted">↗ Posted</span>`;
+  if (s === 'approved') return `<span class="tag status-drafted">✓ Approved</span>`;
+  if (s === 'rejected') return `<span class="tag">✕ Rejected</span>`;
+  return `<span class="tag">${s}</span>`;
+}
+
+async function loadStats() {
+  try {
+    const s = await api.get('/api/stats');
+    document.getElementById('stats').innerHTML = `
+      <div class="stat"><span class="k">Leads today</span><span class="v">${s.leads_today}</span></div>
+      <div class="stat"><span class="k">Drafts</span><span class="v">${s.drafts_today}</span></div>
+      <div class="stat"><span class="k">Approved</span><span class="v">${s.approved_today}</span></div>
+      <div class="stat"><span class="k">Scanned</span><span class="v">${s.posts_scanned_today}<span class="u">posts</span></span></div>
+    `;
+    const next = s.next_scan_in_minutes;
+    document.getElementById('scanStatusText').textContent =
+      next === null || next === undefined ? 'ready' : (next > 0 ? `next in ${next}m` : 'running soon');
+  } catch (e) { console.error(e); }
+}
+
+async function loadNiches() {
+  state.niches = await api.get('/api/niches');
+  const el = document.getElementById('niches');
+  const all = `<button class="${state.selectedNiche === null ? 'on' : ''}" data-id="">All niches<span class="count">${state.leads.length}</span></button>`;
+  el.innerHTML = all + state.niches.map(n => {
+    const count = state.leads.filter(l => l.niche_id === n.id).length;
+    return `<button class="${state.selectedNiche === n.id ? 'on' : ''}" data-id="${n.id}">${n.name}<span class="count">${count}</span></button>`;
+  }).join('');
+  el.querySelectorAll('button').forEach(b => b.onclick = () => {
+    state.selectedNiche = b.dataset.id ? parseInt(b.dataset.id, 10) : null;
+    renderFeed();
+    loadNiches();
+  });
+}
+
+async function loadLeads() {
+  const params = new URLSearchParams();
+  if (state.minScore) params.set('min_score', state.minScore);
+  if (state.statusFilter) params.set('status', state.statusFilter);
+  params.set('limit', 100);
+  state.leads = await api.get('/api/leads?' + params.toString());
+  renderFeed();
+  loadNiches();
+}
+
+function renderFeed() {
+  const niche = state.selectedNiche ? state.niches.find(n => n.id === state.selectedNiche) : null;
+  document.getElementById('feedTitle').innerHTML = niche
+    ? `<em>${niche.name}</em>`
+    : '<em>All niches</em>';
+  const filtered = state.leads.filter(l => !state.selectedNiche || l.niche_id === state.selectedNiche);
+  document.getElementById('feedSub').textContent = niche
+    ? `Watching ${(niche.subreddits || []).length} subreddits · ${filtered.length} leads`
+    : `${filtered.length} leads across ${state.niches.length} niches`;
+
+  const el = document.getElementById('leads');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty">
+      <h2>No leads yet</h2>
+      <p>Run a scan with the <b>Scan now</b> button up top, or wait for the scheduler.<br>
+      If your filter is strict, try lowering the min intent score on the left.</p>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(l => `
+    <div class="lead" data-id="${l.id}">
+      <div class="gauge">
+        <div class="ring">${gaugeSVG(l.intent_score)}<div class="num">${l.intent_score}</div></div>
+        <div class="lbl">intent</div>
+      </div>
+      <div class="body">
+        <div class="meta">
+          <span class="sub-badge">${l.subreddit}</span>
+          <span class="sep">·</span>
+          <span>u/${l.author || 'unknown'}</span>
+          ${l.author_karma ? `<span class="author-k">${l.author_karma}</span>` : ''}
+          <span class="sep">·</span>
+          <span class="time">${timeAgo(l.posted_at)}</span>
+          <span class="sep">·</span>
+          <span>▲ ${l.score} · 💬 ${l.num_comments}</span>
+        </div>
+        <h3 class="title">${escapeHtml(l.title)}</h3>
+        <p class="snippet">${escapeHtml((l.body || l.intent_reason || '').slice(0, 240))}</p>
+        <div class="lead-tags">
+          ${statusTag(l.status)}
+          ${(l.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" data-action="draft">${l.drafts && l.drafts.length ? 'Review draft' : 'Generate draft'} →</button>
+      </div>
+    </div>
+  `).join('');
+
+  el.querySelectorAll('.lead').forEach(node => {
+    const id = parseInt(node.dataset.id, 10);
+    node.onclick = (e) => {
+      if (e.target.closest('button')) return;
+      openDrawer(id);
+    };
+    node.querySelector('[data-action="draft"]').onclick = (e) => {
+      e.stopPropagation();
+      openDrawer(id, true);
+    };
+  });
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function openDrawer(id, autoGenerate = false) {
+  const lead = state.leads.find(l => l.id === id);
+  if (!lead) return;
+  state.selectedLead = id;
+  document.querySelectorAll('.lead').forEach(n => n.classList.toggle('selected', parseInt(n.dataset.id,10) === id));
+  renderDrawer(lead);
+  document.getElementById('drawer').classList.add('open');
+  if (autoGenerate && (!lead.drafts || !lead.drafts.length)) {
+    await generateDraft(id);
+  }
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.querySelectorAll('.lead').forEach(n => n.classList.remove('selected'));
+}
+
+function renderDrawer(lead) {
+  document.getElementById('d-sub').textContent = lead.subreddit;
+  const latestDraft = (lead.drafts && lead.drafts.length) ? lead.drafts[lead.drafts.length - 1] : null;
+  document.getElementById('drawer-body').innerHTML = `
+    <div class="post-full">
+      <h2>${escapeHtml(lead.title)}</h2>
+      <div class="post-meta">
+        <span>u/${escapeHtml(lead.author || 'unknown')}</span>
+        <span>·</span>
+        <span>${timeAgo(lead.posted_at)}</span>
+        ${lead.author_karma ? `<span>·</span><span>karma <span class="author-k">${lead.author_karma}</span></span>` : ''}
+      </div>
+      <div class="post-body">${escapeHtml(lead.body || '(no body text)')}</div>
+      <div class="post-stats">
+        <span>▲ ${lead.score}</span>
+        <span>💬 ${lead.num_comments} comments</span>
+        <span>intent ${lead.intent_score}/100</span>
+        <a href="${lead.url}" target="_blank" rel="noopener">Open on Reddit ↗</a>
+      </div>
+      ${lead.intent_reason ? `<div style="margin-top:12px;font-size:12px;color:var(--fg-dim)"><b>Why it scored ${lead.intent_score}:</b> ${escapeHtml(lead.intent_reason)}</div>` : ''}
+    </div>
+
+    <div class="draft-box">
+      <div class="draft-head">
+        <h3>AI draft reply</h3>
+        <span class="model">${latestDraft ? escapeHtml(latestDraft.model) : '—'}</span>
+      </div>
+      ${latestDraft ? `
+        <textarea class="draft" id="draft-text" data-draft-id="${latestDraft.id}">${escapeHtml(latestDraft.text)}</textarea>
+        <div class="critic">
+          ${(latestDraft.critic_notes || []).map(n =>
+            `<span class="${n.ok ? 'ok' : 'flag'}">● ${escapeHtml(n.key)}${n.note ? ': ' + escapeHtml(n.note) : ''}</span>`
+          ).join('')}
+        </div>
+        <div class="draft-actions">
+          <div class="left">
+            <button class="btn" id="regen">↻ Regenerate</button>
+            <button class="btn" id="copyBtn">⎘ Copy</button>
+          </div>
+          <div class="right">
+            <button class="btn" id="rejectBtn">Reject</button>
+            <button class="btn primary" id="approveBtn">Approve & mark posted</button>
+          </div>
+        </div>
+        <div class="disclosure"><b>Posting:</b> for the MVP, click <b>Copy</b>, open the post on Reddit, paste, then come back and press <b>Approve & mark posted</b>.</div>
+      ` : `
+        <p style="color:var(--fg-dim);margin:0 0 12px">No draft yet.</p>
+        <button class="btn primary" id="genBtn">Generate draft</button>
+      `}
+    </div>
+  `;
+
+  const genBtn = document.getElementById('genBtn');
+  if (genBtn) genBtn.onclick = () => generateDraft(lead.id);
+
+  const regen = document.getElementById('regen');
+  if (regen) regen.onclick = () => generateDraft(lead.id);
+
+  const copyBtn = document.getElementById('copyBtn');
+  if (copyBtn) copyBtn.onclick = async () => {
+    const text = document.getElementById('draft-text').value;
+    try { await navigator.clipboard.writeText(text); toast('Draft copied'); }
+    catch { toast('Copy failed — select and copy manually'); }
+  };
+
+  const approveBtn = document.getElementById('approveBtn');
+  if (approveBtn) approveBtn.onclick = async () => {
+    const draftId = document.getElementById('draft-text').dataset.draftId;
+    const text = document.getElementById('draft-text').value;
+    await api.put(`/api/drafts/${draftId}`, { text });
+    await api.post(`/api/leads/${lead.id}/status/posted`);
+    toast('Marked as posted');
+    await loadLeads(); closeDrawer();
+  };
+
+  const rejectBtn = document.getElementById('rejectBtn');
+  if (rejectBtn) rejectBtn.onclick = async () => {
+    await api.post(`/api/leads/${lead.id}/status/rejected`);
+    toast('Rejected');
+    await loadLeads(); closeDrawer();
+  };
+}
+
+async function generateDraft(leadId) {
+  const genBtn = document.getElementById('genBtn') || document.getElementById('regen');
+  if (genBtn) { genBtn.disabled = true; genBtn.textContent = 'Generating…'; }
+  try {
+    await api.post(`/api/drafts/generate/${leadId}`);
+    const updated = await api.get(`/api/leads/${leadId}`);
+    const idx = state.leads.findIndex(l => l.id === leadId);
+    if (idx >= 0) state.leads[idx] = updated;
+    renderDrawer(updated);
+    renderFeed();
+    toast('Draft generated');
+  } catch (e) {
+    toast('Draft failed: ' + e.message);
+  }
+}
+
+document.getElementById('score-r').addEventListener('input', (e) => {
+  document.getElementById('score-v').textContent = e.target.value;
+  state.minScore = parseInt(e.target.value, 10);
+});
+document.getElementById('score-r').addEventListener('change', loadLeads);
+document.getElementById('statusFilter').addEventListener('change', (e) => {
+  state.statusFilter = e.target.value; loadLeads();
+});
+
+document.getElementById('scanBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true; btn.textContent = '↻ Scanning…';
+  try {
+    await api.post('/api/scan');
+    toast('Scan started — leads will appear in 30-90s');
+    setTimeout(() => { loadLeads(); loadStats(); }, 15000);
+    setTimeout(() => { loadLeads(); loadStats(); }, 45000);
+    setTimeout(() => { loadLeads(); loadStats(); }, 90000);
+  } catch (e) { toast('Scan failed: ' + e.message); }
+  finally { setTimeout(() => { btn.disabled = false; btn.textContent = '↻ Scan now'; }, 2000); }
+});
+
+async function boot() {
+  await loadStats();
+  await loadLeads();
+  await loadNiches();
+  setInterval(loadStats, 30000);
+}
+boot();
+</script>
+</body>
+</html>
